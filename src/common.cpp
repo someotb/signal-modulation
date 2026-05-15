@@ -1,6 +1,8 @@
 #include "common.hpp"
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <stdexcept>
 #include <vector>
 
@@ -21,4 +23,33 @@ std::vector<float> sin_gen(const float freq, float ampl, float phase)
         sinus.push_back(ampl * std::sin(2 * M_PIf * freq * i * fs_step + phase));
 
     return sinus;
+}
+
+std::vector<int16_t> quantize(const std::vector<float> &signal)
+{
+    if (signal.empty())
+        throw std::invalid_argument("Data empty");
+
+    std::vector<int16_t> signal_int16_t(signal.size());
+    for (size_t i = 0; i < signal.size(); ++i)
+        signal_int16_t[i] = static_cast<int16_t>(signal[i] * 32767.0f);
+
+    return signal_int16_t;
+}
+
+float quantize_error(const std::vector<int16_t> &signal_int16_t, const std::vector<float> &signal_float)
+{
+    if (signal_int16_t.empty())
+        throw std::invalid_argument("Data empty");
+    if (signal_float.empty())
+        throw std::invalid_argument("Data empty");
+
+    float error = 0.0f;
+    for (size_t i = 0; i < signal_int16_t.size(); ++i)
+    {
+        float sample = static_cast<float>(signal_int16_t[i]) / 32767.0f;
+        error += std::abs(signal_float[i] - sample);
+    }
+
+    return error / signal_float.size();
 }
