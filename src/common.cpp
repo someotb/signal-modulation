@@ -25,7 +25,7 @@ std::vector<float> sin_gen(const float freq, float ampl, float phase)
     return sinus;
 }
 
-std::vector<float> upsampler(const std::vector<float> &signal)
+std::vector<float> upsampler_float(const std::vector<float> &signal)
 {
     std::vector<float> signal_up(signal.size() * 2);
 
@@ -34,6 +34,25 @@ std::vector<float> upsampler(const std::vector<float> &signal)
         float p0 = signal[i];
         float p1 = signal[i + 1];
         float internal_sample = (p0 + p1) / 2.0f;
+        signal_up[2 * i] = p0;
+        signal_up[2 * i + 1] = internal_sample;
+    }
+
+    signal_up[signal_up.size() - 2] = signal.back();
+    signal_up[signal_up.size() - 1] = signal.back();
+
+    return signal_up;
+}
+
+std::vector<int16_t> upsampler_int16_t(const std::vector<int16_t> &signal)
+{
+    std::vector<int16_t> signal_up(signal.size() * 2);
+
+    for (size_t i = 0; i < signal.size() - 1; ++i)
+    {
+        int16_t p0 = signal[i];
+        int16_t p1 = signal[i + 1];
+        int16_t internal_sample = (static_cast<int32_t>(p0) + p1) / 2;
         signal_up[2 * i] = p0;
         signal_up[2 * i + 1] = internal_sample;
     }
@@ -73,7 +92,7 @@ float quantize_error(const std::vector<int16_t> &signal_int16_t, const std::vect
     return error / signal_float.size();
 }
 
-float rate_upsampler(const std::vector<float> &signal_up, const float freq, const int fs, float ampl, float phase)
+float rate_upsampler_float(const std::vector<float> &signal_up, const float freq, const int fs, float ampl, float phase)
 {
     float fs_step = 1.0f / fs;
     float err = 0.0f;
@@ -81,6 +100,20 @@ float rate_upsampler(const std::vector<float> &signal_up, const float freq, cons
     {
         float sample = ampl * std::sin(2 * M_PIf * freq * i * fs_step + phase);
         err += std::abs(sample - signal_up[i]);
+    }
+
+    return err / signal_up.size();
+}
+
+float rate_upsampler_int16_t(const std::vector<int16_t> &signal_up, const float freq, const int fs, float ampl, float phase)
+{
+    float fs_step = 1.0f / fs;
+    float err = 0.0f;
+    for (size_t i = 0; i < fs; ++i)
+    {
+        float sample = ampl * std::sin(2 * M_PIf * freq * i * fs_step + phase);
+        float signal_scale = static_cast<float>(signal_up[i]) / 32767.0f;
+        err += std::abs(sample - signal_scale);
     }
 
     return err / signal_up.size();
