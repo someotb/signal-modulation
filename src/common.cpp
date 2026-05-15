@@ -72,3 +72,16 @@ float quantize_error(const std::vector<int16_t> &signal_int16_t, const std::vect
 
     return error / signal_float.size();
 }
+
+float rate_upsampler(const std::vector<float> &signal_up, const float freq, const int fs, float ampl, float phase)
+{
+    float fs_step = 1.0f / fs;
+    float err = 0.0f;
+    for (size_t i = 0; i < fs; ++i)
+    {
+        float sample = ampl * std::sin(2 * M_PIf * freq * i * fs_step + phase);
+        err += std::abs(sample - signal_up[i]);
+    }
+
+    return err / signal_up.size();
+}
