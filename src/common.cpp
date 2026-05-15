@@ -25,6 +25,25 @@ std::vector<float> sin_gen(const float freq, float ampl, float phase)
     return sinus;
 }
 
+std::vector<float> upsampler(const std::vector<float> &signal)
+{
+    std::vector<float> signal_up(signal.size() * 2);
+
+    for (size_t i = 0; i < signal.size() - 1; ++i)
+    {
+        float p0 = signal[i];
+        float p1 = signal[i + 1];
+        float internal_sample = (p0 + p1) / 2.0f;
+        signal_up[2 * i] = p0;
+        signal_up[2 * i + 1] = internal_sample;
+    }
+
+    signal_up[signal_up.size() - 2] = signal.back();
+    signal_up[signal_up.size() - 1] = signal.back();
+
+    return signal_up;
+}
+
 std::vector<int16_t> quantize(const std::vector<float> &signal)
 {
     if (signal.empty())
